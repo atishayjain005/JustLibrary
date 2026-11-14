@@ -1,3 +1,24 @@
+function readBooks() {
+    try {
+        const books = JSON.parse(localStorage.getItem('bookList') || '[]');
+        if (!Array.isArray(books)) throw new Error('Invalid library');
+        return books;
+    } catch {
+        new Display().show('danger', 'Your saved library could not be read. Existing data has been preserved. Check browser storage and reload.');
+        return null;
+    }
+}
+
+function saveBooks(books) {
+    try {
+        localStorage.setItem('bookList', JSON.stringify(books));
+        return true;
+    } catch {
+        new Display().show('danger', 'Your changes could not be saved. Check browser storage permissions or space and try again.');
+        return false;
+    }
+}
+
 console.log("This is ES6 version of JustLibrary");
 
 var bookList = {};
@@ -51,9 +72,7 @@ class Display {
                 </button>
               </div>
         </div>`
-        setTimeout(() => {
-            message.innerHTML = '';
-        }, 2000);
+
     };
 }
 //Add submit event listner to form library form
@@ -82,9 +101,10 @@ function libraryFormSubmit(e) {
 
     let display = new Display();
     if (display.validate(book)) {
-        const books = JSON.parse(localStorage.getItem("bookList") || "[]");
+        const books = readBooks();
+        if (!books) return;
         books.push(book);
-        localStorage.setItem("bookList", JSON.stringify(books));
+        if (!saveBooks(books)) return;
         display.add(book);
         display.clear();
         display.show("success", "Your book has been added");
@@ -97,33 +117,23 @@ function libraryFormSubmit(e) {
 
 function showData() {
 
-    if (localStorage.getItem('bookList')) {
-        let showBookList = JSON.parse(localStorage.getItem('bookList'));
-        console.log(showBookList)
-        let tableBody = document.getElementById("tableBody");
-        tableBody.innerText = '';
-        let showDisplay = new Display();
-        for (let i = 0; i < showBookList.length; i++) {
-            const element = showBookList[i];
-            if (showDisplay.validate(element)) {
-                showDisplay.add(element);
-            }
-        }
+    const showBookList = readBooks();
+    if (!showBookList) return;
+    const tableBody = document.getElementById('tableBody');
+    tableBody.replaceChildren();
+    const display = new Display();
+    for (const book of showBookList) {
+        if (display.validate(book)) display.add(book);
     }
 }
 
 
 function removeBook(element) {
     let index = element.parentNode.parentNode.rowIndex;
-    let deleteBook = localStorage.getItem('bookList');
-    if (deleteBook == null) {
-        delBook = [];
-    } else {
-        delBook = JSON.parse(deleteBook);
-    }
+    const delBook = readBooks();
+    if (!delBook) return;
     delBook.splice(index - 1, 1);
-    console.log(delBook);
-    localStorage.setItem("bookList", JSON.stringify(delBook));
+    if (!saveBooks(delBook)) return;
     showData();
 }
 showData();
