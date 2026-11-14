@@ -14,3 +14,12 @@ test('book markup remains inert after adding and reloading', async ({page}) => {
   await expect(page.locator('#tableBody')).toContainText(title);
   expect(await page.evaluate(() => window.injected)).toBeUndefined();
 });
+
+test('invalid input never reaches storage; valid values are trimmed', async ({page}) => {
+  await page.goto('/');
+  await add(page, '   ', 'A');
+  expect(await page.evaluate(() => localStorage.getItem('bookList'))).toBeNull();
+  await expect(page.locator('#bookName')).toHaveValue('   ');
+  await add(page, '  Good Book  ', '  An Author  ');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bookList')))).toEqual([{name:'Good Book',author:'An Author',type:'fiction'}]);
+});

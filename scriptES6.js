@@ -7,19 +7,6 @@ class Book {
         this.author = author;
         this.type = type;
 
-        bookList = {
-            "name": this.name,
-            "author": this.author,
-            "type": this.type
-        }
-        let Books = localStorage.getItem('bookList');
-        if (Books) {
-            Books = JSON.parse(Books);
-            Books.push(bookList);
-        } else {
-            Books = [bookList];
-        }
-        localStorage.setItem('bookList', JSON.stringify(Books));
     }
 }
 
@@ -48,7 +35,7 @@ class Display {
         libraryForm.reset();
     }
     validate(book) {
-        if (book.name.length < 2 || book.author.length < 2) {
+        if (!book || typeof book.name !== "string" || typeof book.author !== "string" || book.name.trim().length < 2 || book.author.trim().length < 2) {
             return false;
         } else {
             return true;
@@ -74,9 +61,9 @@ let libraryForm = document.getElementById("libraryForm");
 libraryForm.addEventListener("submit", libraryFormSubmit);
 
 function libraryFormSubmit(e) {
-    console.log("you have submitted ");
-    let name = document.getElementById("bookName").value;
-    let author = document.getElementById("author").value;
+    e.preventDefault();
+    let name = document.getElementById("bookName").value.trim();
+    let author = document.getElementById("author").value.trim();
     let type;
     let fiction = document.getElementById("fiction");
     let programming = document.getElementById("programming");
@@ -95,6 +82,9 @@ function libraryFormSubmit(e) {
 
     let display = new Display();
     if (display.validate(book)) {
+        const books = JSON.parse(localStorage.getItem("bookList") || "[]");
+        books.push(book);
+        localStorage.setItem("bookList", JSON.stringify(books));
         display.add(book);
         display.clear();
         display.show("success", "Your book has been added");
