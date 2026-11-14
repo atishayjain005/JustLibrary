@@ -27,14 +27,21 @@ class Book {
 class Display {
     add(book) {
         let tableBody = document.getElementById("tableBody");
-        let uiString = ` 
-        <tr>
-           <td>${book.name}</td>
-           <td>${book.author}</td>
-           <td>${book.type}</td>
-           <td class="text-center"><button class = " btn btn-outline-primary " onclick="removeBook(this)">Delete</button></td>
-        </tr>`;
-        tableBody.innerHTML += uiString;
+        const row = document.createElement('tr');
+        for (const value of [book.name, book.author, book.type]) {
+            const cell = document.createElement('td');
+            cell.textContent = value;
+            row.append(cell);
+        }
+        const actions = document.createElement('td');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-outline-primary';
+        button.textContent = 'Delete';
+        button.addEventListener('click', () => removeBook(button));
+        actions.append(button);
+        row.append(actions);
+        tableBody.append(row);
     }
     clear() {
         let libraryForm = document.getElementById("libraryForm");
