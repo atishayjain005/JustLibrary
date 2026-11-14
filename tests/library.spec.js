@@ -61,3 +61,19 @@ test('stale tabs cannot delete a newly replaced entry', async ({page}) => {
   await expect(page.locator('#tableBody')).toContainText('New book');
   await expect(page.locator('#message')).toContainText('changed in another tab');
 });
+
+test('keyboard form, dismiss, empty state and narrow layout', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#emptyState')).toBeVisible();
+  await page.getByLabel('Name :', {exact:true}).fill('A very long book title '.repeat(15));
+  await page.getByLabel('Author :', {exact:true}).fill('Test Author');
+  await page.getByLabel('Author :', {exact:true}).press('Enter');
+  await expect(page.locator('#bookName')).toBeFocused();
+  await expect(page.locator('#emptyState')).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button',{name:'Dismiss'}).click();
+  await expect(page.locator('#message')).toBeEmpty();
+  await page.getByRole('button',{name:'Delete',exact:true}).click();
+  await expect(page.locator('#emptyState')).toBeVisible();
+  await page.screenshot({path:'test-results/library-'+test.info().project.name+'.png',fullPage:true});
+});

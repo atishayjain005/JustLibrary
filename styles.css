@@ -1,0 +1,14 @@
+body { color: #212529; }
+#message { max-width: 960px; margin: 1rem auto; padding: 0 1rem; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
+table { table-layout: fixed; min-width: 460px; }
+td { overflow-wrap: anywhere; }
+button:focus-visible, input:focus-visible, a:focus-visible, .table-scroll:focus-visible { outline: 3px solid #6642c2; outline-offset: 3px; }
+@media (max-width: 600px) {
+  #bgColor { display: block; padding: 1rem !important; }
+  #bgColor .col { padding: 0 !important; text-align: left !important; }
+  #bgColor .navbar-brand { margin: 0 !important; }
+  #bgColor h3 { padding: 0 !important; letter-spacing: 1px !important; }
+  #bgColor button { margin-top: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { #bgColor { transition: none !important; } }

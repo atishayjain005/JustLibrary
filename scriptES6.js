@@ -64,14 +64,20 @@ class Display {
     }
     show(type, displayMessage) {
         let message = document.getElementById('message');
-        message.innerHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                <strong>Message:</strong> ${displayMessage}
-                <button type="button" class=" py-0 close btn btn-outline-dark border-0 bg-transparent float-end "  data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-        </div>`
+        message.replaceChildren();
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.textContent = displayMessage;
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'btn btn-outline-dark ms-3';
+        close.textContent = 'Dismiss';
+        close.addEventListener('click', () => {
+            message.replaceChildren();
+            document.getElementById('bookName').focus();
+        });
+        alert.append(close);
+        message.append(alert);
 
     };
 }
@@ -107,9 +113,11 @@ function libraryFormSubmit(e) {
         if (!saveBooks(books)) return;
         showData();
         display.clear();
+        document.getElementById("bookName").focus();
         display.show("success", "Your book has been added");
     } else {
-        display.show("danger", "Sorry you cannot add this book ");
+        display.show("danger", "Enter at least two non-space characters for both name and author.");
+        document.getElementById(name.length < 2 ? "bookName" : "author").focus();
     }
     e.preventDefault();
 }
@@ -126,6 +134,7 @@ function showData() {
     showBookList.forEach((book, index) => {
         if (display.validate(book)) display.add(book, index, snapshot);
     });
+    document.getElementById("emptyState").hidden = tableBody.children.length > 0;
 }
 
 
@@ -140,6 +149,8 @@ function removeBook(index, snapshot) {
     delBook.splice(index, 1);
     if (!saveBooks(delBook)) return;
     showData();
+    document.getElementById("bookName").focus();
+    new Display().show("success", "Book deleted.");
 }
 showData();
 
@@ -157,4 +168,4 @@ function change() {
     doc.style.backgroundColor = color[i];
     i = (i + 1) % color.length;
 }
-setInterval(change, 2000);
+if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(change, 2000);
