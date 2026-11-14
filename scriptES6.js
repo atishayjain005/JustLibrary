@@ -33,7 +33,7 @@ class Book {
 
 
 class Display {
-    add(book) {
+    add(book, index, snapshot) {
         let tableBody = document.getElementById("tableBody");
         const row = document.createElement('tr');
         for (const value of [book.name, book.author, book.type]) {
@@ -46,7 +46,7 @@ class Display {
         button.type = 'button';
         button.className = 'btn btn-outline-primary';
         button.textContent = 'Delete';
-        button.addEventListener('click', () => removeBook(button));
+        button.addEventListener('click', () => removeBook(index, snapshot));
         actions.append(button);
         row.append(actions);
         tableBody.append(row);
@@ -105,7 +105,7 @@ function libraryFormSubmit(e) {
         if (!books) return;
         books.push(book);
         if (!saveBooks(books)) return;
-        display.add(book);
+        showData();
         display.clear();
         display.show("success", "Your book has been added");
     } else {
@@ -122,17 +122,22 @@ function showData() {
     const tableBody = document.getElementById('tableBody');
     tableBody.replaceChildren();
     const display = new Display();
-    for (const book of showBookList) {
-        if (display.validate(book)) display.add(book);
-    }
+    const snapshot = JSON.stringify(showBookList);
+    showBookList.forEach((book, index) => {
+        if (display.validate(book)) display.add(book, index, snapshot);
+    });
 }
 
 
-function removeBook(element) {
-    let index = element.parentNode.parentNode.rowIndex;
+function removeBook(index, snapshot) {
     const delBook = readBooks();
     if (!delBook) return;
-    delBook.splice(index - 1, 1);
+    if (JSON.stringify(delBook) !== snapshot) {
+        showData();
+        new Display().show('warning', 'Your library changed in another tab. Review the updated list before deleting.');
+        return;
+    }
+    delBook.splice(index, 1);
     if (!saveBooks(delBook)) return;
     showData();
 }

@@ -42,3 +42,22 @@ test('failed writes retain the form and never announce success', async ({page}) 
   await expect(page.locator('#bookName')).toHaveValue('Test Book');
   await expect(page.locator('#tableBody tr')).toHaveCount(0);
 });
+
+test('delete targets original storage index despite invalid legacy rows', async ({page}) => {
+  await page.goto('/');
+  await page.evaluate(() => localStorage.setItem('bookList', JSON.stringify([null,{name:'x',author:'y'}, {name:'Keep',author:'Author',type:'fiction'},{name:'Remove',author:'Author',type:'cooking'}])));
+  await page.reload();
+  await page.getByRole('row').filter({hasText:'Remove'}).getByRole('button').click();
+  await page.reload();
+  await expect(page.locator('#tableBody')).toContainText('Keep');
+  await expect(page.locator('#tableBody')).not.toContainText('Remove');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bookList')).length)).toBe(3);
+});
+test('stale tabs cannot delete a newly replaced entry', async ({page}) => {
+  await page.goto('/');
+  await add(page);
+  await page.evaluate(() => localStorage.setItem('bookList', JSON.stringify([{name:'New book',author:'Other author',type:'fiction'}])));
+  await page.getByRole('button',{name:'Delete',exact:true}).click();
+  await expect(page.locator('#tableBody')).toContainText('New book');
+  await expect(page.locator('#message')).toContainText('changed in another tab');
+});
