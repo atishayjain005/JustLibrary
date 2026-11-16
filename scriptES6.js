@@ -176,4 +176,23 @@ function change() {
     doc.style.backgroundColor = color[i];
     i = (i + 1) % color.length;
 }
-if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(change, 2000);
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+const motionToggle = document.getElementById('motionToggle');
+let motionTimer;
+let motionPaused = motionPreference.matches;
+function updateMotion() {
+    clearInterval(motionTimer);
+    document.getElementById('bgColor').classList.toggle('motion-paused', motionPaused);
+    motionToggle.textContent = motionPaused ? 'Resume header animation' : 'Pause header animation';
+    motionToggle.setAttribute('aria-pressed', String(motionPaused));
+    if (!motionPaused) motionTimer = setInterval(change, 2000);
+}
+motionToggle.addEventListener('click', () => {
+    motionPaused = !motionPaused;
+    updateMotion();
+});
+motionPreference.addEventListener('change', () => {
+    motionPaused = motionPreference.matches;
+    updateMotion();
+});
+updateMotion();

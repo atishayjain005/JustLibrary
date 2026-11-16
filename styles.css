@@ -12,3 +12,5 @@ button:focus-visible, input:focus-visible, a:focus-visible, .table-scroll:focus-
   #bgColor button { margin-top: 1rem; }
 }
 @media (prefers-reduced-motion: reduce) { #bgColor { transition: none !important; } }
+
+#bgColor.motion-paused { transition: none !important; }

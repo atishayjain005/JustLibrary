@@ -105,3 +105,29 @@ test('delete controls identify the book and support keyboard deletion', async ({
   await page.reload();
   await expect(page.locator('#tableBody tr')).toHaveCount(1);
 });
+
+test('header animation can be paused and resumed with a keyboard', async ({page}) => {
+  await page.clock.install();
+  await page.goto('/');
+  const pause = page.getByRole('button', {name:'Pause header animation'});
+  await pause.focus();
+  await pause.press('Enter');
+  const resume = page.getByRole('button', {name:'Resume header animation'});
+  await expect(resume).toHaveAttribute('aria-pressed', 'true');
+  const color = await page.locator('#bgColor').evaluate(el => el.style.backgroundColor);
+  await page.clock.fastForward(6000);
+  expect(await page.locator('#bgColor').evaluate(el => el.style.backgroundColor)).toBe(color);
+  await resume.press('Enter');
+  await page.clock.fastForward(2000);
+  expect(await page.locator('#bgColor').evaluate(el => el.style.backgroundColor)).not.toBe(color);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+test('reduced motion pauses the header on load and when preference changes', async ({page}) => {
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto('/');
+  await expect(page.getByRole('button', {name:'Resume header animation'})).toHaveAttribute('aria-pressed','true');
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await expect(page.getByRole('button', {name:'Pause header animation'})).toHaveAttribute('aria-pressed','false');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await expect(page.getByRole('button', {name:'Resume header animation'})).toHaveAttribute('aria-pressed','true');
+});
