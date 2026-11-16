@@ -135,7 +135,13 @@ function showData() {
     showBookList.forEach((book, index) => {
         if (display.validate(book)) display.add(book, index, snapshot);
     });
-    document.getElementById("emptyState").hidden = tableBody.children.length > 0;
+    const hiddenCount = showBookList.length - tableBody.children.length;
+    const notice = document.getElementById('storageNotice');
+    notice.hidden = hiddenCount === 0;
+    notice.textContent = hiddenCount > 0
+        ? `${hiddenCount} saved record(s) could not be displayed. They are preserved in browser storage. Back up your library before repairing them.`
+        : '';
+    document.getElementById("emptyState").hidden = showBookList.length > 0;
 }
 
 

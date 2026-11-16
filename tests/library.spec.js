@@ -77,3 +77,17 @@ test('keyboard form, dismiss, empty state and narrow layout', async ({page}) => 
   await expect(page.locator('#emptyState')).toBeVisible();
   await page.screenshot({path:'test-results/library-'+test.info().project.name+'.png',fullPage:true});
 });
+
+for (const records of [[null], [null, {name:'Readable book',author:'Author',type:'fiction'}]]) {
+  test('hidden legacy records are explained and preserved '+records.length, async ({page}) => {
+    await page.goto('/');
+    await page.evaluate(records => localStorage.setItem('bookList',JSON.stringify(records)), records);
+    await page.reload();
+    await expect(page.locator('#storageNotice')).toContainText('1 saved record(s)');
+    await expect(page.locator('#emptyState')).toBeHidden();
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bookList')))).toEqual(records);
+    await add(page);
+    await expect(page.locator('#storageNotice')).toBeVisible();
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bookList'))[0])).toBeNull();
+  });
+}
