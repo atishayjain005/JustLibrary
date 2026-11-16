@@ -24,7 +24,7 @@ test('invalid input never reaches storage; valid values are trimmed', async ({pa
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bookList')))).toEqual([{name:'Good Book',author:'An Author',type:'fiction'}]);
 });
 
-for (const saved of ['{broken', '{"not":"array"}']) {
+for (const saved of ['', '{broken', '{"not":"array"}']) {
   test('preserve unreadable storage '+saved, async ({page}) => {
     await page.addInitScript(value => localStorage.setItem('bookList',value), saved);
     await page.goto('/');

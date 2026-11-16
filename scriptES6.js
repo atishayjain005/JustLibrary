@@ -1,6 +1,7 @@
 function readBooks() {
     try {
-        const books = JSON.parse(localStorage.getItem('bookList') || '[]');
+        const saved = localStorage.getItem('bookList');
+        const books = saved === null ? [] : JSON.parse(saved);
         if (!Array.isArray(books)) throw new Error('Invalid library');
         return books;
     } catch {
