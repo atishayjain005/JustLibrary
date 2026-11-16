@@ -32,3 +32,10 @@ Project #12; no existing PR or rejected proposal found.
 
 No disruptive proposals, approval deadlines or auto-approvals. Hosting remains
 unconfigured (Pages API 404); no production deployment claimed.
+
+All five 17 November ideas implemented and moved to review. Checks before each
+commit: JavaScript syntax, full expanding desktop/320px browser suite, and diff
+whitespace validation. Final suite: 28 passing cases. Mobile screenshot inspected.
+Clean dependency install reports zero audit findings. Local dependency files had
+been offloaded; reinstalling from the existing lockfile restored test startup.
+No bundler, TypeScript checker or separate linter applies to this static app.
