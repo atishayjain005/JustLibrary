@@ -47,6 +47,7 @@ class Display {
         button.type = 'button';
         button.className = 'btn btn-outline-primary';
         button.textContent = 'Delete';
+        button.setAttribute('aria-label', `Delete ${book.name}`);
         button.addEventListener('click', () => removeBook(index, snapshot));
         actions.append(button);
         row.append(actions);

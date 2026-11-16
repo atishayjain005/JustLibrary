@@ -57,7 +57,7 @@ test('stale tabs cannot delete a newly replaced entry', async ({page}) => {
   await page.goto('/');
   await add(page);
   await page.evaluate(() => localStorage.setItem('bookList', JSON.stringify([{name:'New book',author:'Other author',type:'fiction'}])));
-  await page.getByRole('button',{name:'Delete',exact:true}).click();
+  await page.getByRole('button',{name:/^Delete /}).click();
   await expect(page.locator('#tableBody')).toContainText('New book');
   await expect(page.locator('#message')).toContainText('changed in another tab');
 });
@@ -73,7 +73,7 @@ test('keyboard form, dismiss, empty state and narrow layout', async ({page}) => 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Dismiss'}).click();
   await expect(page.locator('#message')).toBeEmpty();
-  await page.getByRole('button',{name:'Delete',exact:true}).click();
+  await page.getByRole('button',{name:/^Delete /}).click();
   await expect(page.locator('#emptyState')).toBeVisible();
   await page.screenshot({path:'test-results/library-'+test.info().project.name+'.png',fullPage:true});
 });
@@ -91,3 +91,17 @@ for (const records of [[null], [null, {name:'Readable book',author:'Author',type
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('bookList'))[0])).toBeNull();
   });
 }
+
+test('delete controls identify the book and support keyboard deletion', async ({page}) => {
+  await page.goto('/');
+  await add(page, 'First book');
+  await add(page, 'Second book');
+  const remove = page.getByRole('button', {name:'Delete Second book',exact:true});
+  await remove.focus();
+  await remove.press('Enter');
+  await expect(page.locator('#tableBody')).toContainText('First book');
+  await expect(page.locator('#tableBody')).not.toContainText('Second book');
+  await expect(page.locator('#bookName')).toBeFocused();
+  await page.reload();
+  await expect(page.locator('#tableBody tr')).toHaveCount(1);
+});
