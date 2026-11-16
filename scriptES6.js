@@ -1,3 +1,25 @@
+function readBooks() {
+    try {
+        const saved = localStorage.getItem('bookList');
+        const books = saved === null ? [] : JSON.parse(saved);
+        if (!Array.isArray(books)) throw new Error('Invalid library');
+        return books;
+    } catch {
+        new Display().show('danger', 'Your saved library could not be read. Existing data has been preserved. Check browser storage and reload.');
+        return null;
+    }
+}
+
+function saveBooks(books) {
+    try {
+        localStorage.setItem('bookList', JSON.stringify(books));
+        return true;
+    } catch {
+        new Display().show('danger', 'Your changes could not be saved. Check browser storage permissions or space and try again.');
+        return false;
+    }
+}
+
 console.log("This is ES6 version of JustLibrary");
 
 var bookList = {};
@@ -7,41 +29,36 @@ class Book {
         this.author = author;
         this.type = type;
 
-        bookList = {
-            "name": this.name,
-            "author": this.author,
-            "type": this.type
-        }
-        let Books = localStorage.getItem('bookList');
-        if (Books) {
-            Books = JSON.parse(Books);
-            Books.push(bookList);
-        } else {
-            Books = [bookList];
-        }
-        localStorage.setItem('bookList', JSON.stringify(Books));
     }
 }
 
 
 class Display {
-    add(book) {
+    add(book, index, snapshot) {
         let tableBody = document.getElementById("tableBody");
-        let uiString = ` 
-        <tr>
-           <td>${book.name}</td>
-           <td>${book.author}</td>
-           <td>${book.type}</td>
-           <td class="text-center"><button class = " btn btn-outline-primary " onclick="removeBook(this)">Delete</button></td>
-        </tr>`;
-        tableBody.innerHTML += uiString;
+        const row = document.createElement('tr');
+        for (const value of [book.name, book.author, book.type]) {
+            const cell = document.createElement('td');
+            cell.textContent = value;
+            row.append(cell);
+        }
+        const actions = document.createElement('td');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-outline-primary';
+        button.textContent = 'Delete';
+        button.setAttribute('aria-label', `Delete ${book.name}`);
+        button.addEventListener('click', () => removeBook(index, snapshot));
+        actions.append(button);
+        row.append(actions);
+        tableBody.append(row);
     }
     clear() {
         let libraryForm = document.getElementById("libraryForm");
         libraryForm.reset();
     }
     validate(book) {
-        if (book.name.length < 2 || book.author.length < 2) {
+        if (!book || typeof book.name !== "string" || typeof book.author !== "string" || book.name.trim().length < 2 || book.author.trim().length < 2) {
             return false;
         } else {
             return true;
@@ -49,17 +66,21 @@ class Display {
     }
     show(type, displayMessage) {
         let message = document.getElementById('message');
-        message.innerHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                <strong>Message:</strong> ${displayMessage}
-                <button type="button" class=" py-0 close btn btn-outline-dark border-0 bg-transparent float-end "  data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-        </div>`
-        setTimeout(() => {
-            message.innerHTML = '';
-        }, 2000);
+        message.replaceChildren();
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.textContent = displayMessage;
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'btn btn-outline-dark ms-3';
+        close.textContent = 'Dismiss';
+        close.addEventListener('click', () => {
+            message.replaceChildren();
+            document.getElementById('bookName').focus();
+        });
+        alert.append(close);
+        message.append(alert);
+
     };
 }
 //Add submit event listner to form library form
@@ -67,9 +88,9 @@ let libraryForm = document.getElementById("libraryForm");
 libraryForm.addEventListener("submit", libraryFormSubmit);
 
 function libraryFormSubmit(e) {
-    console.log("you have submitted ");
-    let name = document.getElementById("bookName").value;
-    let author = document.getElementById("author").value;
+    e.preventDefault();
+    let name = document.getElementById("bookName").value.trim();
+    let author = document.getElementById("author").value.trim();
     let type;
     let fiction = document.getElementById("fiction");
     let programming = document.getElementById("programming");
@@ -88,11 +109,17 @@ function libraryFormSubmit(e) {
 
     let display = new Display();
     if (display.validate(book)) {
-        display.add(book);
+        const books = readBooks();
+        if (!books) return;
+        books.push(book);
+        if (!saveBooks(books)) return;
+        showData();
         display.clear();
+        document.getElementById("bookName").focus();
         display.show("success", "Your book has been added");
     } else {
-        display.show("danger", "Sorry you cannot add this book ");
+        display.show("danger", "Enter at least two non-space characters for both name and author.");
+        document.getElementById(name.length < 2 ? "bookName" : "author").focus();
     }
     e.preventDefault();
 }
@@ -100,34 +127,38 @@ function libraryFormSubmit(e) {
 
 function showData() {
 
-    if (localStorage.getItem('bookList')) {
-        let showBookList = JSON.parse(localStorage.getItem('bookList'));
-        console.log(showBookList)
-        let tableBody = document.getElementById("tableBody");
-        tableBody.innerText = '';
-        let showDisplay = new Display();
-        for (let i = 0; i < showBookList.length; i++) {
-            const element = showBookList[i];
-            if (showDisplay.validate(element)) {
-                showDisplay.add(element);
-            }
-        }
-    }
+    const showBookList = readBooks();
+    if (!showBookList) return;
+    const tableBody = document.getElementById('tableBody');
+    tableBody.replaceChildren();
+    const display = new Display();
+    const snapshot = JSON.stringify(showBookList);
+    showBookList.forEach((book, index) => {
+        if (display.validate(book)) display.add(book, index, snapshot);
+    });
+    const hiddenCount = showBookList.length - tableBody.children.length;
+    const notice = document.getElementById('storageNotice');
+    notice.hidden = hiddenCount === 0;
+    notice.textContent = hiddenCount > 0
+        ? `${hiddenCount} saved record(s) could not be displayed. They are preserved in browser storage. Back up your library before repairing them.`
+        : '';
+    document.getElementById("emptyState").hidden = showBookList.length > 0;
 }
 
 
-function removeBook(element) {
-    let index = element.parentNode.parentNode.rowIndex;
-    let deleteBook = localStorage.getItem('bookList');
-    if (deleteBook == null) {
-        delBook = [];
-    } else {
-        delBook = JSON.parse(deleteBook);
+function removeBook(index, snapshot) {
+    const delBook = readBooks();
+    if (!delBook) return;
+    if (JSON.stringify(delBook) !== snapshot) {
+        showData();
+        new Display().show('warning', 'Your library changed in another tab. Review the updated list before deleting.');
+        return;
     }
-    delBook.splice(index - 1, 1);
-    console.log(delBook);
-    localStorage.setItem("bookList", JSON.stringify(delBook));
+    delBook.splice(index, 1);
+    if (!saveBooks(delBook)) return;
     showData();
+    document.getElementById("bookName").focus();
+    new Display().show("success", "Book deleted.");
 }
 showData();
 
@@ -145,4 +176,23 @@ function change() {
     doc.style.backgroundColor = color[i];
     i = (i + 1) % color.length;
 }
-setInterval(change, 2000);
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+const motionToggle = document.getElementById('motionToggle');
+let motionTimer;
+let motionPaused = motionPreference.matches;
+function updateMotion() {
+    clearInterval(motionTimer);
+    document.getElementById('bgColor').classList.toggle('motion-paused', motionPaused);
+    motionToggle.textContent = motionPaused ? 'Resume header animation' : 'Pause header animation';
+    motionToggle.setAttribute('aria-pressed', String(motionPaused));
+    if (!motionPaused) motionTimer = setInterval(change, 2000);
+}
+motionToggle.addEventListener('click', () => {
+    motionPaused = !motionPaused;
+    updateMotion();
+});
+motionPreference.addEventListener('change', () => {
+    motionPaused = motionPreference.matches;
+    updateMotion();
+});
+updateMotion();
